@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureTenantToken;
+use App\Http\Middleware\InitializeTenantRequest;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\PermissionRegistrar;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
@@ -20,6 +24,8 @@ class TenancyServiceProvider extends ServiceProvider
 
     public function events()
     {
+        $permissionCacheKey = config('permission.cache.key');
+
         return [
             // Tenant events
             Events\CreatingTenant::class => [],
@@ -27,7 +33,7 @@ class TenancyServiceProvider extends ServiceProvider
                 JobPipeline::make([
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
-                    // Jobs\SeedDatabase::class,
+                    Jobs\SeedDatabase::class,
 
                     // Your own jobs to prepare the tenant.
                     // Provision API keys, create S3 buckets, anything you want!
@@ -78,9 +84,19 @@ class TenancyServiceProvider extends ServiceProvider
             ],
 
             Events\BootstrappingTenancy::class => [],
-            Events\TenancyBootstrapped::class => [],
+            Events\TenancyBootstrapped::class => [
+                function (Events\TenancyBootstrapped $event) use ($permissionCacheKey): void {
+                    config(['permission.cache.key' => $permissionCacheKey.'.tenant.'.$event->tenancy->tenant->getTenantKey()]);
+                    app(PermissionRegistrar::class)->initializeCache();
+                },
+            ],
             Events\RevertingToCentralContext::class => [],
-            Events\RevertedToCentralContext::class => [],
+            Events\RevertedToCentralContext::class => [
+                function () use ($permissionCacheKey): void {
+                    config(['permission.cache.key' => $permissionCacheKey]);
+                    app(PermissionRegistrar::class)->initializeCache();
+                },
+            ],
 
             // Resource syncing
             Events\SyncedResourceSaved::class => [
@@ -133,6 +149,8 @@ class TenancyServiceProvider extends ServiceProvider
         $tenancyMiddleware = [
             // Even higher priority than the initialization middleware
             Middleware\PreventAccessFromCentralDomains::class,
+            InitializeTenantRequest::class,
+            EnsureTenantToken::class,
 
             Middleware\InitializeTenancyByDomain::class,
             Middleware\InitializeTenancyBySubdomain::class,
@@ -142,7 +160,7 @@ class TenancyServiceProvider extends ServiceProvider
         ];
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);
+            $this->app[Kernel::class]->prependToMiddlewarePriority($middleware);
         }
     }
 }
