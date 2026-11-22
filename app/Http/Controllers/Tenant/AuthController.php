@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -23,18 +22,29 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => 'The provided credentials are incorrect.']);
         }
 
-        return response()->json(['token_type' => 'Bearer', 'access_token' => $token]);
+        return response()->json([
+            'data' => [
+                'user' => auth('api')->user(),
+                'access_token' => $token,
+            ],
+            'message' => 'Logged in successfully',
+        ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user()->load('roles'));
+        return response()->json([
+            'data' => $request->user()->load('roles'),
+            'message' => 'User profile retrieved successfully',
+        ]);
     }
 
-    public function logout(): Response
+    public function logout(): JsonResponse
     {
         auth('api')->logout();
 
-        return response()->noContent();
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
     }
 }

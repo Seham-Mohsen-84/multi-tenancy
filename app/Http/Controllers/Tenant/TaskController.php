@@ -7,27 +7,36 @@ use App\Models\Task;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json($this->accessibleTasks($request)->latest('id')->paginate());
+        return response()->json([
+            'data' => $this->accessibleTasks($request)->latest('id')->paginate(),
+            'message' => 'Tasks retrieved successfully',
+        ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $this->validatedTask($request);
         $data['user_id'] ??= $request->user()->getKey();
+        $task = Task::create($data);
 
-        return response()->json(Task::create($data), 201);
+        return response()->json([
+            'data' => $task,
+            'message' => 'Task created successfully',
+        ], 201);
     }
 
     public function show(Request $request, string $task): JsonResponse
     {
-        return response()->json($this->accessibleTasks($request)->findOrFail($task));
+        return response()->json([
+            'data' => $this->accessibleTasks($request)->findOrFail($task),
+            'message' => 'Task retrieved successfully',
+        ]);
     }
 
     public function update(Request $request, string $task): JsonResponse
@@ -35,14 +44,19 @@ class TaskController extends Controller
         $record = $this->accessibleTasks($request)->findOrFail($task);
         $record->update($this->validatedTask($request));
 
-        return response()->json($record);
+        return response()->json([
+            'data' => $record,
+            'message' => 'Task updated successfully',
+        ]);
     }
 
-    public function destroy(Request $request, string $task): Response
+    public function destroy(Request $request, string $task): JsonResponse
     {
         $this->accessibleTasks($request)->findOrFail($task)->delete();
 
-        return response()->noContent();
+        return response()->json([
+            'message' => 'Task deleted successfully',
+        ]);
     }
 
     private function accessibleTasks(Request $request): Builder

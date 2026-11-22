@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -26,17 +25,21 @@ class AdminAuthController extends Controller
         }
 
         return response()->json([
-            "data" => [
+            'data' => [
                 'admin' => $admin,
                 'access_token' => $admin->createToken('central-api')->plainTextToken,
+                'token_type' => 'Bearer',
             ],
-            "message"=>"Logged in successfully",
+            'message' => 'Logged in successfully',
         ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(["data" => $request->user() , "message" => "Admin data"]);
+        return response()->json([
+            'data' => $request->user(),
+            'message' => 'Admin data retrieved successfully',
+        ]);
     }
 
     public function logout(Request $request): JsonResponse

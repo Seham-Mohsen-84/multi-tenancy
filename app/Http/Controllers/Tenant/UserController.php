@@ -7,14 +7,16 @@ use App\Http\Requests\SaveTenantUserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(User::with('roles')->paginate());
+        return response()->json([
+            'data' => User::with('roles')->paginate(),
+            'message' => 'Users retrieved successfully',
+        ]);
     }
 
     public function store(SaveTenantUserRequest $request): JsonResponse
@@ -23,12 +25,18 @@ class UserController extends Controller
             return User::create($request->safe()->except('role'))->assignRole($request->validated('role'));
         });
 
-        return response()->json($user->load('roles'), 201);
+        return response()->json([
+            'data' => $user->load('roles'),
+            'message' => 'User created successfully',
+        ], 201);
     }
 
     public function show(string $user): JsonResponse
     {
-        return response()->json(User::with('roles')->findOrFail($user));
+        return response()->json([
+            'data' => User::with('roles')->findOrFail($user),
+            'message' => 'User retrieved successfully',
+        ]);
     }
 
     public function update(SaveTenantUserRequest $request, string $user): JsonResponse
@@ -46,16 +54,21 @@ class UserController extends Controller
             }
         });
 
-        return response()->json($account->load('roles'));
+        return response()->json([
+            'data' => $account->load('roles'),
+            'message' => 'User updated successfully',
+        ]);
     }
 
-    public function destroy(Request $request, string $user): Response
+    public function destroy(Request $request, string $user): JsonResponse
     {
         $account = User::findOrFail($user);
         abort_if($account->is($request->user()), 422, 'You cannot delete your own account.');
 
         $account->delete();
 
-        return response()->noContent();
+        return response()->json([
+            'message' => 'User deleted successfully',
+        ]);
     }
 }
