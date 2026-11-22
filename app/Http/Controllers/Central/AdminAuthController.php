@@ -26,20 +26,25 @@ class AdminAuthController extends Controller
         }
 
         return response()->json([
-            'token_type' => 'Bearer',
-            'access_token' => $admin->createToken('central-api')->plainTextToken,
+            "data" => [
+                'admin' => $admin,
+                'access_token' => $admin->createToken('central-api')->plainTextToken,
+            ],
+            "message"=>"Logged in successfully",
         ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        return response()->json(["data" => $request->user() , "message" => "Admin data"]);
     }
 
-    public function logout(Request $request): Response
+    public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->noContent();
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
     }
 }

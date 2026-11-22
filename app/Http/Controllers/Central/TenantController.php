@@ -53,12 +53,16 @@ class TenantController extends Controller
             throw $exception;
         }
 
-        return response()->json($tenant->load('domains'), 201);
+        return response()->json([
+            "data"=>$tenant->load('domains'),
+            "message"=>"Tenant created successfully",
+            ],
+            201);
     }
 
     public function show(Tenant $tenant): JsonResponse
     {
-        return response()->json($tenant->load('domains'));
+        return response()->json(["data"=>$tenant->load('domains')]);
     }
 
     public function update(Request $request, Tenant $tenant): JsonResponse
