@@ -16,7 +16,7 @@ Route::middleware(['web', PreventAccessFromCentralDomains::class, InitializeTena
 Route::prefix('api')
     ->middleware(['api', PreventAccessFromCentralDomains::class, InitializeTenantRequest::class])
     ->group(function (): void {
-        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+        Route::post('login', [AuthController::class, 'login']);
 
         Route::middleware([EnsureTenantToken::class, 'auth:api'])->group(function (): void {
             Route::get('me', [AuthController::class, 'me']);
