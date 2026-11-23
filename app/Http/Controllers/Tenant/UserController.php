@@ -14,7 +14,7 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'data' => User::with('roles')->paginate(),
+            'data' => User::paginate(),
             'message' => 'Users retrieved successfully',
         ]);
     }
@@ -26,7 +26,7 @@ class UserController extends Controller
         });
 
         return response()->json([
-            'data' => $user->load('roles'),
+            'data' => $user,
             'message' => 'User created successfully',
         ], 201);
     }
@@ -34,7 +34,7 @@ class UserController extends Controller
     public function show(string $user): JsonResponse
     {
         return response()->json([
-            'data' => User::with('roles')->findOrFail($user),
+            'data' => User::findOrFail($user),
             'message' => 'User retrieved successfully',
         ]);
     }
@@ -55,7 +55,7 @@ class UserController extends Controller
         });
 
         return response()->json([
-            'data' => $account->load('roles'),
+            'data' => $account,
             'message' => 'User updated successfully',
         ]);
     }
